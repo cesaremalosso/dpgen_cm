@@ -2814,7 +2814,148 @@ def post_fp_vasp (iter_index,
        raise RuntimeError("find too many unsuccessfully terminated jobs. Too many FP tasks are not converged. Please check your input parameters (e.g. INCAR) or configuration (e.g. POSCAR) in directories \'iter.*.*/02.fp/task.*.*/.\'")
 
 
-def post_fp_pwscf (iter_index,
+def post_fp_pwscf_paolo (iter_index,
+                   jdata):
+    model_devi_jobs = jdata['model_devi_jobs']
+    assert (iter_index < len(model_devi_jobs))
+
+    iter_name = make_iter_name(iter_index)
+    work_path = os.path.join(iter_name, fp_name)
+    fp_tasks = glob.glob(os.path.join(work_path, 'task.*'))
+    fp_tasks.sort()
+    if len(fp_tasks) == 0 :
+        return
+
+    system_index = []
+    for ii in fp_tasks :
+        system_index.append(os.path.basename(ii).split('.')[1])
+    system_index.sort()
+    set_tmp = set(system_index)
+    system_index = list(set_tmp)
+    system_index.sort()
+
+    cwd = os.getcwd()
+    for ss in system_index :
+        sys_output = glob.glob(os.path.join(work_path, "task.%s.*/output"%ss))
+        sys_input = glob.glob(os.path.join(work_path, "task.%s.*/input"%ss))
+        sys_output.sort()
+        sys_input.sort()
+
+        flag=True
+        # PAOLO
+        ifail = 0
+        # End PAOLO
+        for ii,oo in zip(sys_input,sys_output) :
+            if flag:
+                ## PAOLO
+                try:
+                    _sys = dpdata.LabeledSystem(oo, fmt = 'qe/pw/scf', type_map = jdata['type_map'])
+                    if len(_sys)>0:
+                       all_sys=_sys
+                       flag=False
+                except IndexError:
+                    ifail += 1
+
+                ## End PAOLO
+                #_sys = dpdata.LabeledSystem(oo, fmt = 'qe/pw/scf', type_map = jdata['type_map'])
+                else:
+                   pass
+            else:
+                # PAOLO
+                try:
+                    _sys = dpdata.LabeledSystem(oo, fmt = 'qe/pw/scf', type_map = jdata['type_map'])
+                    if len(_sys)>0:   
+                        all_sys.append(_sys)
+                except IndexError:
+                    ifail += 1
+                # End PAOLO
+                #_sys = dpdata.LabeledSystem(oo, fmt = 'qe/pw/scf', type_map = jdata['type_map'])
+
+        # PAOLO
+        dlog.info("Not converged runs: {:d} in {:d} (i.e. {:.2f}%)".format(ifail, len(sys_output), 100*ifail/len(system_index)))
+        # End PAOLO
+        sys_data_path = os.path.join(work_path, 'data.%s'%ss)
+        all_sys.to_deepmd_raw(sys_data_path)
+        all_sys.to_deepmd_npy(sys_data_path, set_size = len(sys_output))
+
+
+def post_fp_pwscf_cm (iter_index,
+                   jdata):
+    model_devi_jobs = jdata['model_devi_jobs']
+    assert (iter_index < len(model_devi_jobs))
+
+    iter_name = make_iter_name(iter_index)
+    work_path = os.path.join(iter_name, fp_name)
+    fp_tasks = glob.glob(os.path.join(work_path, 'task.*'))
+    fp_tasks.sort()
+    if len(fp_tasks) == 0 :
+        return
+
+    system_index = []
+    for ii in fp_tasks :
+        system_index.append(os.path.basename(ii).split('.')[1])
+    system_index.sort()
+    set_tmp = set(system_index)
+    system_index = list(set_tmp)
+    system_index.sort()
+
+    cwd = os.getcwd()
+    for ss in system_index :
+        sys_output = glob.glob(os.path.join(work_path, "task.%s.*/output"%ss))
+        sys_input = glob.glob(os.path.join(work_path, "task.%s.*/input"%ss))
+        sys_output.sort()
+        sys_input.sort()
+
+        flag=True
+        # PAOLO
+        ifail = 0
+        # End PAOLO
+        for ii,oo in zip(sys_input,sys_output) :
+            if flag:
+                ## PAOLO
+                try:
+                    _sys = dpdata.LabeledSystem(oo, fmt = 'qe/pw/scf', type_map = jdata['type_map'])
+                    if len(_sys)>0:
+                       all_sys=_sys
+                       flag=False
+                except IndexError:
+                    ifail += 1
+
+                ## End PAOLO
+                #_sys = dpdata.LabeledSystem(oo, fmt = 'qe/pw/scf', type_map = jdata['type_map'])
+                else:
+                   pass
+            else:
+                # PAOLO
+                try:
+                    _sys = dpdata.LabeledSystem(oo, fmt = 'qe/pw/scf', type_map = jdata['type_map'])
+                    if len(_sys)>0:   
+                        all_sys.append(_sys)
+                except IndexError:
+                    ifail += 1
+                # End PAOLO
+                #_sys = dpdata.LabeledSystem(oo, fmt = 'qe/pw/scf', type_map = jdata['type_map'])
+
+        # PAOLO
+        dlog.info("Not converged runs: {:d} in {:d} (i.e. {:.2f}%)".format(ifail, len(sys_output), 100*ifail/len(system_index)))
+        # End PAOLO
+        sys_data_path = os.path.join(work_path, 'data.%s'%ss)
+        all_sys.to_deepmd_raw(sys_data_path)
+
+        # start CESARE
+        for key, value in all_sys.data.iteritems() :
+           print(key) 
+        #
+        # for it in range(np.shape(all_sys.data['forces'])[0]):
+        #     en_lr, forces_lr = compute_lr(all_sys.data['coords'][it])
+        #     all_sys.data['energies'][it] -= en_lr
+        #     all_sys.data['forces'][it] -= forces_lr
+        #
+        # end CESARE
+
+        all_sys.to_deepmd_npy(sys_data_path, set_size = len(sys_output))
+
+def post_fp_pwscf_original (iter_index,
                    jdata):
     model_devi_jobs = jdata['model_devi_jobs']
     assert (iter_index < len(model_devi_jobs))
