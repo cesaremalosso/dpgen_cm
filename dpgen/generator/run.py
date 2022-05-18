@@ -70,6 +70,10 @@ except ImportError:
     dlog.info("GromacsWrapper>=0.8.0 is needed for DP-GEN + Gromacs.")
     pass
 
+# start CESARE
+from lammps import lammps
+# end CESARE
+
 template_name = 'template'
 train_name = '00.train'
 train_task_fmt = '%03d'
@@ -2954,6 +2958,25 @@ def post_fp_pwscf_cm (iter_index,
         # end CESARE
 
         all_sys.to_deepmd_npy(sys_data_path, set_size = len(sys_output))
+
+# start CESARE
+
+
+def compute_lr():
+        lmp = lammps()
+        lmp.file('in.lmp')
+        
+        natoms = lmp.extract_global("natoms")
+        forces_ew = np.zeros((natoms,3))
+        ff = lmp.extract_atom("f")
+        for n in range(natoms):
+           forces_ew[n][0] = ff[n][0]
+           forces_ew[n][1] = ff[n][1]
+           forces_ew[n][2] = ff[n][2]
+
+        energy_ew = lmp.get_thermo('pe')
+        return forces_ew, energy_ew
+#end CESARE
 
 def post_fp_pwscf_original (iter_index,
                    jdata):
